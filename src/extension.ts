@@ -27,7 +27,7 @@ import { CopilotLogWatcher } from './copilotLogWatcher';
 import { estimateCost, estimateEnergy, resolveModelPricing } from './tokenCounter';
 import { UsageStorage } from './usageStorage';
 import { StatusBarManager } from './statusBar';
-import { DashboardPanel, DashboardViewProvider } from './dashboard';
+import { DashboardPanel, DashboardViewProvider, preloadChartJs } from './dashboard';
 
 let completionTracker: CompletionTracker;
 let chatTracker: ChatTracker;
@@ -154,6 +154,9 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Storage
   usageStorage = new UsageStorage(context.globalState);
+
+  // Warm up Chart.js cache so first dashboard open doesn't hit disk
+  preloadChartJs();
 
   // Status bar
   statusBar = new StatusBarManager();
