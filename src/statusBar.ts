@@ -31,16 +31,16 @@ export class StatusBarManager implements vscode.Disposable {
   }
 
   addInputTokens(tokens: number, cost: number, energyWh: number = 0): void {
-    this.sessionInputTokens += tokens;
-    this.sessionCost += cost;
-    this.sessionEnergyWh += energyWh;
+    this.sessionInputTokens += Math.max(0, isFinite(tokens) ? tokens : 0);
+    this.sessionCost += Math.max(0, isFinite(cost) ? cost : 0);
+    this.sessionEnergyWh += Math.max(0, isFinite(energyWh) ? energyWh : 0);
     this.updateDisplay();
   }
 
   addOutputTokens(tokens: number, cost: number, energyWh: number = 0): void {
-    this.sessionOutputTokens += tokens;
-    this.sessionCost += cost;
-    this.sessionEnergyWh += energyWh;
+    this.sessionOutputTokens += Math.max(0, isFinite(tokens) ? tokens : 0);
+    this.sessionCost += Math.max(0, isFinite(cost) ? cost : 0);
+    this.sessionEnergyWh += Math.max(0, isFinite(energyWh) ? energyWh : 0);
     this.updateDisplay();
   }
 
