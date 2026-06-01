@@ -153,7 +153,7 @@ export function sessionEventToTokenEvents(event: SessionEvent, sessionId: string
           outputTokens: metrics.usage.outputTokens,
           inputTokens: metrics.usage.inputTokens,
           cacheReadTokens: metrics.usage.cacheReadTokens,
-          premiumRequests: metrics.requests.cost,
+          premiumRequests: metrics.requests.count,
           sessionId,
         });
       }
@@ -265,14 +265,16 @@ export class CopilotSessionWatcher implements vscode.Disposable {
 
     // Save event IDs (as array)
     const ids = Array.from(this.processedEventIds);
-    void this.globalState.update(CopilotSessionWatcher.STORAGE_KEY_EVENT_IDS, ids);
+    this.globalState.update(CopilotSessionWatcher.STORAGE_KEY_EVENT_IDS, ids)
+      .then(undefined, (err: unknown) => console.error('Eating Token: Failed to persist event IDs:', err));
 
     // Save file positions (as plain object)
     const positions: Record<string, number> = {};
     for (const [key, value] of this.filePositions) {
       positions[key] = value;
     }
-    void this.globalState.update(CopilotSessionWatcher.STORAGE_KEY_FILE_POSITIONS, positions);
+    this.globalState.update(CopilotSessionWatcher.STORAGE_KEY_FILE_POSITIONS, positions)
+      .then(undefined, (err: unknown) => console.error('Eating Token: Failed to persist file positions:', err));
   }
 
   private scanSessionDirs(): void {
