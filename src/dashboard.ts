@@ -78,6 +78,12 @@ function getChartJsSource(): string {
   return '/* Chart.js not found */';
 }
 
+/** Warm up the Chart.js cache asynchronously so first dashboard open is fast. */
+export function preloadChartJs(): void {
+  if (chartJsSource) { return; }
+  setImmediate(() => getChartJsSource());
+}
+
 // ─── Aggregation helpers ──────────────────────────────────────────────────────
 
 function aggregateModels(days: DailyUsage[]): Record<string, AggregatedModelData> {
