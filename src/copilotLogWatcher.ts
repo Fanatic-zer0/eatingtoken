@@ -227,13 +227,15 @@ export class CopilotLogWatcher implements vscode.Disposable {
     if (!this.globalState) { return; }
 
     const ids = Array.from(this.processedRequestIds);
-    void this.globalState.update(CopilotLogWatcher.STORAGE_KEY_REQUEST_IDS, ids);
+    this.globalState.update(CopilotLogWatcher.STORAGE_KEY_REQUEST_IDS, ids)
+      .then(undefined, (err: unknown) => console.error('Eating Token: Failed to persist request IDs:', err));
 
     const positions: Record<string, number> = {};
     for (const [key, value] of this.filePositions) {
       positions[key] = value;
     }
-    void this.globalState.update(CopilotLogWatcher.STORAGE_KEY_FILE_POSITIONS, positions);
+    this.globalState.update(CopilotLogWatcher.STORAGE_KEY_FILE_POSITIONS, positions)
+      .then(undefined, (err: unknown) => console.error('Eating Token: Failed to persist file positions:', err));
   }
 
   private scanForLogFiles(): void {
@@ -316,14 +318,22 @@ export class CopilotLogWatcher implements vscode.Disposable {
 
       if (stat.size <= currentPos) { return; }
 
+      const chunkSize = 512 * 1024; // 512 KB chunks
+      const totalBytes = stat.size - currentPos;
       const fd = fs.openSync(filePath, 'r');
-      const buffer = Buffer.alloc(stat.size - currentPos);
-      fs.readSync(fd, buffer, 0, buffer.length, currentPos);
+      let newContent = '';
+      let bytesRead = 0;
+      while (bytesRead < totalBytes) {
+        const toRead = Math.min(chunkSize, totalBytes - bytesRead);
+        const chunk = Buffer.alloc(toRead);
+        fs.readSync(fd, chunk, 0, toRead, currentPos + bytesRead);
+        newContent += chunk.toString('utf8');
+        bytesRead += toRead;
+      }
       fs.closeSync(fd);
 
       this.filePositions.set(filePath, stat.size);
 
-      const newContent = buffer.toString('utf8');
       const lines = newContent.split('\n');
 
       for (const line of lines) {
